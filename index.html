@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Job Application Agent</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 300px 1fr 340px;
+      min-height: 100vh;
+    }
+
+    .sidebar,
+    .rightbar {
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      overflow-y: auto;
+    }
+
+    .rightbar {
+      border-right: none;
+      border-left: 1px solid #e5e7eb;
+    }
+
+    .main {
+      padding: 28px;
+      overflow-y: auto;
+    }
+
+    .panel-header {
+      padding: 22px 18px 14px 18px;
+      border-bottom: 1px solid #eef2f7;
+      background: #fff;
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+
+    .panel-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+    }
+
+    .panel-subtitle {
+      margin-top: 6px;
+      color: #6b7280;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .section {
+      padding: 16px 18px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+
+    .section h3 {
+      margin: 0 0 12px 0;
+      font-size: 14px;
+    }
+
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .history-item {
+      padding: 12px;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      background: #fafafa;
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+
+    .history-item:hover {
+      background: #f0f9ff;
+      border-color: #93c5fd;
+    }
+
+    .history-item.active {
+      background: #e0f2fe;
+      border-color: #38bdf8;
+    }
+
+    .history-title {
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #111827;
+    }
+
+    .history-preview {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.4;
+      max-height: 36px;
+      overflow: hidden;
+    }
+
+    .small-btn,
+    .primary-btn,
+    .secondary-btn,
+    .danger-btn {
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: 0.2s ease;
+    }
+
+    .small-btn {
+      width: 100%;
+      padding: 11px 14px;
+      background: #111827;
+      color: #fff;
+      font-size: 13px;
+    }
+
+    .small-btn:hover {
+      background: #000;
+    }
+
+    .danger-btn {
+      background: #dc2626;
+      color: #fff;
+      padding: 14px 18px;
+      font-size: 15px;
+    }
+
+    .danger-btn:hover {
+      background: #b91c1c;
+    }
+
+    .main-wrap {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #0f172a, #1d4ed8);
+      color: #fff;
+      border-radius: 24px;
+      padding: 28px;
+      box-shadow: 0 12px 36px rgba(15, 23, 42, 0.14);
+      margin-bottom: 22px;
+    }
+
+    .hero h1 {
+      margin: 0 0 10px 0;
+      font-size: 34px;
+    }
+
+    .hero p {
+      margin: 0;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.9);
+      font-size: 15px;
+    }
+
+    .status-bar {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .pill {
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 22px;
+      padding: 24px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.06);
+      border: 1px solid #eef2f7;
+      margin-bottom: 18px;
+    }
+
+    .card h2 {
+      margin: 0 0 12px 0;
+      font-size: 22px;
+    }
+
+    .helper {
+      margin: 0 0 16px 0;
+      color: #6b7280;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    textarea, input[type="text"] {
+      width: 100%;
+      border: 1px solid #d1d5db;
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 14px;
+      line-height: 1.6;
+      background: #fbfdff;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 220px;
+      resize: vertical;
+    }
+
+    textarea:focus, input[type="text"]:focus {
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+    }
+
+    .button-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 16px;
+    }
+
+    .primary-btn {
+      background: #22c55e;
+      color: #fff;
+      padding: 14px 18px;
+      font-size: 15px;
+    }
+
+    .primary-btn:hover {
+      background: #16a34a;
+    }
+
+    .secondary-btn {
+      background: #e5e7eb;
+      color: #111827;
+      padding: 14px 18px;
+      font-size: 15px;
+    }
+
+    .secondary-btn:hover {
+      background: #d1d5db;
+    }
+
+    .output-block {
+      border: 1px solid #e5e7eb;
+      border-radius: 18px;
+      padding: 18px;
+      background: #fcfcfd;
+      margin-bottom: 14px;
+    }
+
+    .output-block h3 {
+      margin: 0 0 10px 0;
+      font-size: 17px;
+    }
+
+    .output-content {
+      white-space: pre-wrap;
+      line-height: 1.65;
+      font-size: 14px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .obs-card {
+      margin: 14px 18px;
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 16px;
+      background: #fafafa;
+    }
+
+    .obs-card h4 {
+      margin: 0 0 10px 0;
+      font-size: 14px;
+    }
+
+    .obs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 13px;
+      line-height: 1.5;
+      color: #374151;
+    }
+
+    .obs-log {
+      background: #0f172a;
+      color: #e2e8f0;
+      border-radius: 14px;
+      padding: 14px;
+      font-size: 12px;
+      line-height: 1.55;
+      white-space: pre-wrap;
+      max-height: 280px;
+      overflow-y: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    }
+
+    .empty {
+      color: #9ca3af;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .selected-banner {
+      margin-bottom: 14px;
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: #eef6ff;
+      border: 1px solid #cfe3ff;
+      color: #1e3a8a;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    @media (max-width: 1250px) {
+      .app {
+        grid-template-columns: 280px 1fr;
+      }
+      .rightbar {
+        display: none;
+      }
+    }
+
+    @media (max-width: 850px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+      .sidebar {
+        display: none;
+      }
+      .main {
+        padding: 18px;
+      }
+      .hero h1 {
+        font-size: 28px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="panel-header">
+        <h2 class="panel-title">Memory</h2>
+        <div class="panel-subtitle">Browse saved resumes and past job application runs.</div>
+      </div>
+
+      <div class="section">
+        <button class="small-btn" onclick="startNewResume()">+ New Resume</button>
+      </div>
+
+      <div class="section">
+        <h3>Resume History</h3>
+        <div id="resumeHistory" class="history-list"></div>
+      </div>
+
+      <div class="section">
+        <h3>Job Description + Output History</h3>
+        <div id="jobHistory" class="history-list"></div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="main-wrap">
+        <div class="hero">
+          <h1>Job Application Agent</h1>
+          <p>
+            Save multiple resumes, switch freely between them, and run the agent on any job description.
+            Review past applications, compare outputs, and track each run in one place.
+          </p>
+        </div>
+
+        <div id="statusBar" class="status-bar"></div>
+
+        <div class="card">
+          <h2>Step 1 · Save Resume</h2>
+          <p class="helper">
+            Save and manage multiple resumes here. Select one from the left panel whenever you want to use it for a new application.
+          </p>
+
+          <input id="resumeTitle" type="text" placeholder="Resume title, e.g. Data Science Resume" />
+          <div style="height:10px;"></div>
+          <textarea id="resumeInput" placeholder="Paste your full resume here..."></textarea>
+
+          <div class="button-row">
+            <button class="primary-btn" onclick="saveResume()">Save Resume</button>
+            <button class="secondary-btn" onclick="clearResumeForm()">Clear Resume Form</button>
+          </div>
+        </div>
+
+        <div class="card" id="jobCard">
+          <h2>Step 2 · Run Agent</h2>
+          <p class="helper">
+            Choose one resume from the left, then paste a job description and run the agent.
+          </p>
+
+          <div id="selectedResumeBanner" class="selected-banner">No resume selected.</div>
+          <textarea id="jobInput" placeholder="Paste the job description here..."></textarea>
+
+          <div class="button-row">
+            <button class="primary-btn" onclick="runAgent()">Run Agent</button>
+            <button class="secondary-btn" onclick="clearJobInput()">Clear Job Input</button>
+            <button class="secondary-btn" onclick="clearPage()">Clear Page</button>
+            <button class="danger-btn" onclick="clearHistory()">Clear History</button>
+            <button class="secondary-btn" onclick="refreshAllData()">Refresh History</button>
+          </div>
+        </div>
+
+        <div class="card" id="outputCard">
+          <h2>Agent Output</h2>
+
+          <div class="output-block">
+            <h3>Plan</h3>
+            <div id="planOutput" class="output-content"></div>
+          </div>
+
+          <div class="output-block">
+            <h3>Keywords</h3>
+            <div id="keywordsOutput" class="output-content"></div>
+          </div>
+
+          <div class="output-block">
+            <h3>Match Analysis</h3>
+            <div id="matchOutput" class="output-content"></div>
+          </div>
+
+          <div class="output-block">
+            <h3>Cover Letter</h3>
+            <div id="coverLetterOutput" class="output-content"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <aside class="rightbar">
+      <div class="panel-header">
+        <h2 class="panel-title">Observability</h2>
+        <div class="panel-subtitle">Track execution steps, tool calls, latency, success path, errors, and interaction history.</div>
+      </div>
+
+      <div class="obs-card">
+        <h4>Current Run Summary</h4>
+        <div id="obsSummary" class="obs-list">
+          <div class="empty">No run yet.</div>
+        </div>
+      </div>
+
+      <div class="obs-card">
+        <h4>Agent Execution Steps</h4>
+        <div id="obsSteps" class="obs-list">
+          <div class="empty">Execution steps will appear here.</div>
+        </div>
+      </div>
+
+      <div class="obs-card">
+        <h4>Request / Interaction Log</h4>
+        <div id="obsLog" class="obs-log">No logs yet.</div>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+    const API_BASE = "https://d702vb0g8f.execute-api.us-east-2.amazonaws.com";
+
+    let resumes = [];
+    let runs = [];
+    let activeResumeId = null;
+    let activeRunId = null;
+
+    function previewText(text, len = 80) {
+      if (!text) return "Empty";
+      return text.replace(/\s+/g, " ").trim().slice(0, len);
+    }
+
+    function logEvent(message) {
+      const el = document.getElementById("obsLog");
+      const now = new Date().toLocaleTimeString();
+      const current = el.textContent === "No logs yet." ? "" : el.textContent + "\n";
+      el.textContent = current + `[${now}] ${message}`;
+      el.scrollTop = el.scrollHeight;
+    }
+
+    function setSummary(items) {
+      const el = document.getElementById("obsSummary");
+      if (!items || items.length === 0) {
+        el.innerHTML = '<div class="empty">No run yet.</div>';
+        return;
+      }
+      el.innerHTML = items.map(x => `<div>${escapeHtml(x)}</div>`).join("");
+    }
+
+    function setSteps(items) {
+      const el = document.getElementById("obsSteps");
+      if (!items || items.length === 0) {
+        el.innerHTML = '<div class="empty">Execution steps will appear here.</div>';
+        return;
+      }
+      el.innerHTML = items.map(x => `<div>${escapeHtml(x)}</div>`).join("");
+    }
+
+    function renderStatusBar() {
+      const bar = document.getElementById("statusBar");
+      const activeResume = resumes.find(r => r.resume_id === activeResumeId);
+
+      const pills = [];
+      pills.push(`<div class="pill">Resumes: ${resumes.length}</div>`);
+      pills.push(`<div class="pill">Job Runs: ${runs.length}</div>`);
+      pills.push(`<div class="pill">Selected Resume: ${escapeHtml(activeResume ? activeResume.title : "None")}</div>`);
+
+      bar.innerHTML = pills.join("");
+    }
+
+    function renderSelectedResume() {
+      const banner = document.getElementById("selectedResumeBanner");
+      const activeResume = resumes.find(r => r.resume_id === activeResumeId);
+
+      if (!activeResume) {
+        banner.textContent = "No resume selected.";
+      } else {
+        banner.textContent = `Current Resume: ${activeResume.title}`;
+      }
+    }
+
+    function renderResumeHistory() {
+      const container = document.getElementById("resumeHistory");
+
+      if (resumes.length === 0) {
+        container.innerHTML = '<div class="empty">No resumes saved yet.</div>';
+        return;
+      }
+
+      container.innerHTML = resumes.map(item => `
+        <div class="history-item ${item.resume_id === activeResumeId ? 'active' : ''}" onclick="selectResume('${item.resume_id}')">
+          <div class="history-title">${escapeHtml(item.title || "Untitled Resume")}</div>
+          <div class="history-preview">${escapeHtml(previewText(item.content, 90))}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderJobHistory() {
+      const container = document.getElementById("jobHistory");
+
+      if (runs.length === 0) {
+        container.innerHTML = '<div class="empty">No job runs yet.</div>';
+        return;
+      }
+
+      container.innerHTML = runs.map(item => `
+        <div class="history-item ${item.run_id === activeRunId ? 'active' : ''}" onclick="viewRun('${item.run_id}')">
+          <div class="history-title">${escapeHtml(item.resume_title || "Resume")} · ${item.success === 1 ? 'Success' : 'Failed'}</div>
+          <div class="history-preview">${escapeHtml(previewText(item.job_description, 100))}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderAll() {
+      renderStatusBar();
+      renderSelectedResume();
+      renderResumeHistory();
+      renderJobHistory();
+    }
+
+    function clearResumeForm() {
+      document.getElementById("resumeTitle").value = "";
+      document.getElementById("resumeInput").value = "";
+    }
+
+    function clearJobInput() {
+      document.getElementById("jobInput").value = "";
+    }
+
+    function clearOutputs() {
+      document.getElementById("planOutput").textContent = "";
+      document.getElementById("keywordsOutput").textContent = "";
+      document.getElementById("matchOutput").textContent = "";
+      document.getElementById("coverLetterOutput").textContent = "";
+    }
+
+    function clearPage() {
+      document.getElementById("resumeTitle").value = "";
+      document.getElementById("resumeInput").value = "";
+      document.getElementById("jobInput").value = "";
+      clearOutputs();
+      document.getElementById("obsLog").textContent = "No logs yet.";
+      activeRunId = null;
+
+      setSummary(["Page cleared."]);
+      setSteps(["Cleared current inputs and outputs on the page."]);
+      logEvent("Cleared page content.");
+      renderAll();
+    }
+
+    async function clearHistory() {
+      const confirmed = confirm("This will permanently delete all resumes and job history. Continue?");
+      if (!confirmed) return;
+
+      try {
+        logEvent("Sending POST /clear-history...");
+
+        const response = await fetch(`${API_BASE}/clear-history`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to clear history.");
+        }
+
+        resumes = [];
+        runs = [];
+        activeResumeId = null;
+        activeRunId = null;
+
+        document.getElementById("resumeTitle").value = "";
+        document.getElementById("resumeInput").value = "";
+        document.getElementById("jobInput").value = "";
+        clearOutputs();
+        document.getElementById("obsLog").textContent = "No logs yet.";
+
+        setSummary(["History cleared successfully."]);
+        setSteps([
+          "All resume history deleted.",
+          "All job run history deleted.",
+          "UI refreshed."
+        ]);
+
+        renderAll();
+        logEvent("Cleared all DynamoDB history.");
+        alert("All history has been cleared.");
+      } catch (error) {
+        logEvent(`Clear history failed: ${error.message}`);
+        alert(error.message);
+      }
+    }
+
+    function startNewResume() {
+      clearResumeForm();
+      activeResumeId = null;
+      renderAll();
+      logEvent("Started a new resume draft.");
+      setSummary([]);
+      setSteps([]);
+    }
+
+    function selectResume(resumeId) {
+      activeResumeId = resumeId;
+      const resume = resumes.find(r => r.resume_id === resumeId);
+
+      if (resume) {
+        document.getElementById("resumeTitle").value = resume.title || "";
+        document.getElementById("resumeInput").value = resume.content || "";
+        logEvent(`Selected resume: ${resume.title}`);
+        setSummary([
+          `Resume selected: ${resume.title}`,
+          `Resume ID: ${resume.resume_id}`
+        ]);
+        setSteps([
+          "Resume loaded from history.",
+          "Ready for job description input."
+        ]);
+      }
+
+      renderAll();
+    }
+
+    function viewRun(runId) {
+      activeRunId = runId;
+      const run = runs.find(r => r.run_id === runId);
+      if (!run) return;
+
+      activeResumeId = run.resume_id || activeResumeId;
+
+      document.getElementById("jobInput").value = run.job_description || "";
+      document.getElementById("planOutput").textContent = run.plan || "";
+      document.getElementById("keywordsOutput").textContent = run.keywords || "";
+      document.getElementById("matchOutput").textContent = run.match || "";
+      document.getElementById("coverLetterOutput").textContent = run.cover_letter || "";
+
+      setSummary([
+        `Run ID: ${run.run_id}`,
+        `Resume: ${run.resume_title || "Unknown"}`,
+        `Latency: ${run.latency ?? "N/A"}s`,
+        `Success: ${run.success === 1 ? "Yes" : "No"}`,
+        `Created At: ${run.created_at || "N/A"}`
+      ]);
+
+      const stepLines = [];
+      (run.agent_steps || []).forEach(x => stepLines.push(x));
+      (run.success_path || []).forEach(x => stepLines.push(`Success Path: ${x}`));
+      if (run.error_trace) {
+        stepLines.push("Error Trace Captured.");
+      }
+      setSteps(stepLines);
+
+      const logParts = [];
+      (run.user_interaction_trace || []).forEach(x => logParts.push(`[USER TRACE] ${x}`));
+      (run.tool_calls || []).forEach(x => {
+        logParts.push(`[TOOL] ${x.tool_name} | status=${x.status} | latency=${x.latency ?? "N/A"}s`);
+      });
+      if (run.error_trace) {
+        logParts.push(`[ERROR]\n${run.error_trace}`);
+      }
+      document.getElementById("obsLog").textContent = logParts.length ? logParts.join("\n") : "No logs yet.";
+
+      logEvent(`Viewed historical run: ${run.run_id}`);
+      renderAll();
+    }
+
+    async function fetchResumes() {
+      logEvent("Fetching resumes from /resume...");
+      const response = await fetch(`${API_BASE}/resume`);
+      const data = await response.json();
+      resumes = data.resumes || [];
+
+      if (!activeResumeId && resumes.length > 0) {
+        activeResumeId = resumes[0].resume_id;
+      }
+    }
+
+    async function fetchRuns() {
+      logEvent("Fetching runs from /runs...");
+      const response = await fetch(`${API_BASE}/runs`);
+      const data = await response.json();
+      runs = data.runs || [];
+    }
+
+    async function refreshAllData() {
+      try {
+        await Promise.all([fetchResumes(), fetchRuns()]);
+        renderAll();
+        logEvent("Refreshed all history.");
+      } catch (error) {
+        logEvent(`Refresh failed: ${error.message}`);
+        alert("Failed to refresh data.");
+      }
+    }
+
+    async function saveResume() {
+      const title = document.getElementById("resumeTitle").value.trim();
+      const content = document.getElementById("resumeInput").value.trim();
+
+      if (!content) {
+        alert("Please enter a resume first.");
+        return;
+      }
+
+      try {
+        logEvent("Sending POST /resume...");
+        setSummary(["Saving resume..."]);
+        setSteps([
+          "Collected resume title and content from UI.",
+          "Sending POST request to /resume.",
+          "Waiting for API response."
+        ]);
+
+        const response = await fetch(`${API_BASE}/resume`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ title, content })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Failed to save resume.");
+        }
+
+        logEvent(`Resume saved successfully: ${data.resume.resume_id}`);
+
+        await fetchResumes();
+        activeResumeId = data.resume.resume_id;
+        renderAll();
+
+        setSummary([
+          `Resume saved successfully.`,
+          `Resume ID: ${data.resume.resume_id}`,
+          `Title: ${data.resume.title}`
+        ]);
+
+        setSteps([
+          "Resume submitted to backend.",
+          "Resume saved successfully.",
+          "Resume history refreshed.",
+          "New resume selected as active."
+        ]);
+
+        alert("Resume saved successfully.");
+      } catch (error) {
+        logEvent(`Resume save failed: ${error.message}`);
+        setSummary([`Error: ${error.message}`]);
+        setSteps(["Resume save failed."]);
+        alert(error.message);
+      }
+    }
+
+    async function runAgent() {
+      const activeResume = resumes.find(r => r.resume_id === activeResumeId);
+      const jd = document.getElementById("jobInput").value.trim();
+
+      if (!activeResume) {
+        alert("Please select a resume first.");
+        return;
+      }
+
+      if (!jd) {
+        alert("Please enter a job description.");
+        return;
+      }
+
+      try {
+        logEvent(`Sending POST /agent with resume_id=${activeResume.resume_id}...`);
+        setSummary([
+          `Resume: ${activeResume.title}`,
+          `Status: Running...`
+        ]);
+        setSteps([
+          "Selected resume from history.",
+          "Collected job description from UI.",
+          "Sending POST request to /agent."
+        ]);
+
+        const response = await fetch(`${API_BASE}/agent`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            resume_id: activeResume.resume_id,
+            jd: jd
+          })
+        });
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || "Agent run failed.");
+        }
+
+        document.getElementById("planOutput").textContent = data.plan || "";
+        document.getElementById("keywordsOutput").textContent = data.keywords || "";
+        document.getElementById("matchOutput").textContent = data.match || "";
+        document.getElementById("coverLetterOutput").textContent = data.cover_letter || "";
+
+        activeRunId = data.run_id || null;
+
+        setSummary([
+          `Run completed successfully.`,
+          `Resume: ${data.resume_title || activeResume.title}`,
+          `Latency: ${data.latency ?? "N/A"}s`,
+          `Success: ${data.success === 1 ? "Yes" : "No"}`,
+          `Run ID: ${data.run_id || "N/A"}`
+        ]);
+
+        const stepLines = [];
+        (data.agent_steps || []).forEach(x => stepLines.push(x));
+        (data.success_path || []).forEach(x => stepLines.push(`Success Path: ${x}`));
+        if (data.error_trace) {
+          stepLines.push("Error Trace Captured.");
+        }
+        setSteps(stepLines);
+
+        const logParts = [];
+        (data.user_interaction_trace || []).forEach(x => logParts.push(`[USER TRACE] ${x}`));
+        (data.tool_calls || []).forEach(x => {
+          logParts.push(`[TOOL] ${x.tool_name} | status=${x.status} | latency=${x.latency ?? "N/A"}s`);
+        });
+        if (data.error_trace) {
+          logParts.push(`[ERROR]\n${data.error_trace}`);
+        }
+        document.getElementById("obsLog").textContent = logParts.length ? logParts.join("\n") : "No logs yet.";
+
+        logEvent(`Agent run completed successfully. Run ID: ${data.run_id || "N/A"}`);
+
+        await fetchRuns();
+        renderAll();
+      } catch (error) {
+        logEvent(`Agent run failed: ${error.message}`);
+        setSummary([`Error: ${error.message}`]);
+        setSteps([
+          "Request was sent to /agent.",
+          "The run failed before a valid response was displayed."
+        ]);
+        alert(error.message);
+      }
+    }
+
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return "";
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function initializeApp() {
+      try {
+        logEvent("Initializing app...");
+        await fetchResumes();
+        await fetchRuns();
+        renderAll();
+
+        if (activeResumeId) {
+          const activeResume = resumes.find(r => r.resume_id === activeResumeId);
+          if (activeResume) {
+            document.getElementById("resumeTitle").value = activeResume.title || "";
+            document.getElementById("resumeInput").value = activeResume.content || "";
+            setSummary([
+              `Loaded initial data.`,
+              `Selected Resume: ${activeResume.title}`
+            ]);
+            setSteps([
+              "Fetched resume history.",
+              "Fetched job run history.",
+              "Rendered UI panels.",
+              "Ready for interaction."
+            ]);
+          }
+        } else {
+          setSummary(["No resume selected yet."]);
+          setSteps(["Fetched initial data from backend."]);
+        }
+      } catch (error) {
+        logEvent(`Initialization failed: ${error.message}`);
+        setSummary([`Initialization error: ${error.message}`]);
+        setSteps(["Failed to initialize app."]);
+      }
+    }
+
+    initializeApp();
+  </script>
+</body>
+</html>
