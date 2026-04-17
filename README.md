@@ -106,8 +106,7 @@ These metrics are collected for each run and used to evaluate system performance
 ```
 Job-agent/
 ├── index.html
-├── lambda/
-│   └── lambda_function.py
+├── lambda_function.py
 ├── README.md
 ```
 
