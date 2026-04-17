@@ -115,22 +115,3 @@ Job-agent/
 ## Deployment
 
 The application is deployed using AWS Amplify for frontend hosting. Backend services are implemented using API Gateway, Lambda, DynamoDB, and Amazon Bedrock.
-
----
-
-## Limitations
-
-- LLM outputs may contain inaccuracies or hallucinations
-- Multiple model calls increase latency
-- System incurs cost due to model usage
-- No authentication or multi-user support in current version
-
----
-
-## Future Work
-
-- Reduce latency by optimizing pipeline steps
-- Improve prompt design for better output quality
-- Add user authentication and access control
-- Implement caching to reduce repeated computation
-- Extend to support additional job application features
