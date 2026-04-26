@@ -65,8 +65,8 @@ def call_llm(prompt, tool_name, observability):
             }
         ],
         inferenceConfig={
-            "maxTokens": 500,
-            "temperature": 0.3
+            "maxTokens": 700,
+            "temperature": 0.2
         }
     )
 
@@ -78,6 +78,80 @@ def call_llm(prompt, tool_name, observability):
     tool_record["finished_at"] = datetime.utcnow().isoformat()
 
     return text
+
+
+def safe_json_parse(text):
+    try:
+        start = text.find("{")
+        end = text.rfind("}") + 1
+        if start != -1 and end != -1:
+            return json.loads(text[start:end])
+        return json.loads(text)
+    except Exception:
+        return {
+            "run_planning": True,
+            "run_keyword_extraction": True,
+            "run_resume_matching": True,
+            "run_cover_letter": True,
+            "reason": "Fallback decision: the model did not return valid JSON, so the system selected the full application workflow."
+        }
+
+
+def decide_workflow(jd, resume, observability):
+    observability["agent_steps"].append("Step -1: Workflow decision started.")
+
+    prompt = f"""
+You are the workflow controller for a job application agent.
+
+Given the resume and job description, decide which tools should be executed.
+
+Available tools:
+1. planning
+2. keyword_extraction
+3. resume_matching
+4. cover_letter_generation
+
+Return ONLY valid JSON in this exact format:
+{{
+  "run_planning": true,
+  "run_keyword_extraction": true,
+  "run_resume_matching": true,
+  "run_cover_letter": true,
+  "reason": "brief explanation"
+}}
+
+Decision rules:
+- If both resume and job description are available, usually run the full workflow.
+- If the job description is too short or unclear, still run keyword extraction but explain the limitation.
+- If the resume is too short, still run matching but explain that the result may be limited.
+- If the user appears to need application materials, run cover letter generation.
+- You may skip a step only if it is clearly unnecessary.
+
+Resume:
+{resume}
+
+Job Description:
+{jd}
+"""
+
+    raw_decision = call_llm(prompt, "decide_workflow", observability)
+    decision = safe_json_parse(raw_decision)
+
+    decision = {
+        "run_planning": bool(decision.get("run_planning", True)),
+        "run_keyword_extraction": bool(decision.get("run_keyword_extraction", True)),
+        "run_resume_matching": bool(decision.get("run_resume_matching", True)),
+        "run_cover_letter": bool(decision.get("run_cover_letter", True)),
+        "reason": decision.get("reason", "No reason provided.")
+    }
+
+    observability["workflow_decision"] = decision
+    observability["agent_steps"].append(
+        "Step -1: Workflow decision completed. "
+        f"Decision={json.dumps(decision)}"
+    )
+
+    return decision
 
 
 def plan_tasks(jd, observability):
@@ -133,6 +207,7 @@ def agent_pipeline(jd, resume, resume_id):
     observability = {
         "agent_steps": [],
         "tool_calls": [],
+        "workflow_decision": {},
         "error_trace": "",
         "success_path": [],
         "user_interaction_trace": [
@@ -143,20 +218,42 @@ def agent_pipeline(jd, resume, resume_id):
     }
 
     try:
-        plan = plan_tasks(jd, observability)
-        keywords = extract_keywords(jd, observability)
-        match = match_resume(resume, keywords, observability)
-        cover_letter = generate_cover_letter(jd, resume, observability)
+        decision = decide_workflow(jd, resume, observability)
+
+        plan = ""
+        keywords = ""
+        match = ""
+        cover_letter = ""
+
+        if decision["run_planning"]:
+            plan = plan_tasks(jd, observability)
+        else:
+            observability["agent_steps"].append("Step 0: Planning skipped by workflow decision.")
+
+        if decision["run_keyword_extraction"]:
+            keywords = extract_keywords(jd, observability)
+        else:
+            observability["agent_steps"].append("Step 1: Keyword extraction skipped by workflow decision.")
+
+        if decision["run_resume_matching"]:
+            if not keywords:
+                keywords = "No extracted keywords available because keyword extraction was skipped."
+            match = match_resume(resume, keywords, observability)
+        else:
+            observability["agent_steps"].append("Step 2: Resume matching skipped by workflow decision.")
+
+        if decision["run_cover_letter"]:
+            cover_letter = generate_cover_letter(jd, resume, observability)
+        else:
+            observability["agent_steps"].append("Step 3: Cover letter generation skipped by workflow decision.")
 
         latency = round(time.time() - start, 2)
-        success = 1 if cover_letter else 0
+        success = 1 if (plan or keywords or match or cover_letter) else 0
 
         observability["success_path"] = [
             "Resume retrieved successfully.",
-            "Planning completed.",
-            "Keyword extraction completed.",
-            "Resume-job match analysis completed.",
-            "Cover letter generated successfully.",
+            "LLM workflow decision completed.",
+            "Selected tools executed according to workflow decision.",
             "Run saved successfully."
         ]
         observability["user_interaction_trace"].append("Agent execution completed successfully.")
@@ -168,6 +265,7 @@ def agent_pipeline(jd, resume, resume_id):
             "cover_letter": cover_letter,
             "latency": latency,
             "success": success,
+            "workflow_decision": observability["workflow_decision"],
             "agent_steps": observability["agent_steps"],
             "tool_calls": observability["tool_calls"],
             "error_trace": observability["error_trace"],
@@ -190,6 +288,7 @@ def agent_pipeline(jd, resume, resume_id):
             "cover_letter": "",
             "latency": latency,
             "success": 0,
+            "workflow_decision": observability.get("workflow_decision", {}),
             "agent_steps": observability["agent_steps"],
             "tool_calls": observability["tool_calls"],
             "error_trace": observability["error_trace"],
@@ -273,6 +372,7 @@ def run_agent_and_save(body):
         "cover_letter": result["cover_letter"],
         "latency": Decimal(str(result["latency"])),
         "success": result["success"],
+        "workflow_decision": result["workflow_decision"],
         "agent_steps": result["agent_steps"],
         "tool_calls": result["tool_calls"],
         "error_trace": result["error_trace"],
