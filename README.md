@@ -156,8 +156,7 @@ The system is publicly accessible through the Amplify deployment URL.
 ```
 Job-agent/
 ├── index.html
-├── lambda/
-│   └── lambda_function.py
+├── lambda_function.py
 ├── README.md
 ```
 
