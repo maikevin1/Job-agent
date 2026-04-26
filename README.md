@@ -14,7 +14,7 @@ Unlike a simple chatbot, this application uses a multi-step agent pipeline to de
 - Support for multiple resumes with persistent storage
 - Job description and output history tracking
 - Observability panel with detailed execution logs
-- Metrics tracking including latency and success rate
+- Metrics tracking including latency, success rate, and requirement coverage
 - Fully deployed web application
 
 ---
@@ -30,6 +30,8 @@ The system is built using a serverless architecture on AWS:
 - LLM Service: Amazon Bedrock
 
 ### Workflow
+
+User → Amplify → API Gateway → Lambda → DynamoDB + Bedrock → Response
 
 1. User interacts with the web interface (Amplify)
 2. Requests are sent to API Gateway
@@ -59,6 +61,9 @@ The system implements a structured agent workflow with four steps:
 
 Each step is executed sequentially, and intermediate outputs are used to inform later stages.
 
+**Note:**  
+The current implementation follows a fixed pipeline. While the LLM performs reasoning within each step, it does not yet dynamically decide which steps to execute. Future work will introduce dynamic agent control for more flexible workflows.
+
 ---
 
 ## Observability
@@ -78,7 +83,7 @@ All observability data is stored in DynamoDB and displayed in the frontend.
 
 ## Metrics
 
-The system tracks two primary metrics:
+The system tracks three key metrics:
 
 - Latency  
   Measures the total execution time of the agent pipeline.
@@ -86,7 +91,10 @@ The system tracks two primary metrics:
 - Success Rate  
   Indicates whether a complete output (including a cover letter) is successfully generated.
 
-These metrics are collected for each run and used to evaluate system performance.
+- Requirement Coverage (Quality Metric)  
+  Measures how well the generated cover letter addresses key job requirements extracted from the job description.
+
+These metrics provide both system-level performance insights and output quality evaluation.
 
 ---
 
@@ -101,17 +109,74 @@ These metrics are collected for each run and used to evaluate system performance
 
 ---
 
-## Repository Structure
+## Setup
 
-```
-Job-agent/
-├── index.html
-├── lambda_function.py
-├── README.md
-```
+To reproduce this project:
+
+1. Clone the repository
+2. Deploy the Lambda function in AWS
+3. Create DynamoDB tables:
+   - JobAgentResumes
+   - JobAgentRuns
+4. Configure API Gateway with routes:
+   - POST /agent
+   - POST /resume
+   - GET /resume
+   - GET /runs
+   - POST /clear-history
+5. Set environment variables in Lambda
+6. Deploy frontend using AWS Amplify
+
+---
+
+## Environment Variables
+
+The following environment variable is required:
+
+- MODEL_ID: Bedrock model ID used for LLM inference
 
 ---
 
 ## Deployment
 
-The application is deployed using AWS Amplify for frontend hosting. Backend services are implemented using API Gateway, Lambda, DynamoDB, and Amazon Bedrock.
+The application is fully deployed using AWS services:
+
+- Frontend is hosted on AWS Amplify
+- Backend logic is implemented using AWS Lambda
+- API Gateway exposes REST endpoints
+- DynamoDB stores application data and logs
+- Amazon Bedrock provides LLM inference
+
+The system is publicly accessible through the Amplify deployment URL.
+
+---
+
+## Repository Structure
+
+```
+Job-agent/
+├── index.html
+├── lambda/
+│   └── lambda_function.py
+├── README.md
+```
+
+---
+
+## Limitations
+
+- LLM outputs may contain inaccuracies or hallucinations
+- Multi-step pipeline increases latency
+- Model usage incurs cost
+- No authentication or multi-user support
+- Workflow is fixed rather than dynamically controlled
+
+---
+
+## Future Work
+
+- Introduce dynamic agent decision-making
+- Improve prompt design for better output quality
+- Add user authentication and access control
+- Implement caching to reduce repeated computation
+- Extend support for more job application scenarios
